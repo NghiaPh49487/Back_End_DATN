@@ -1,6 +1,33 @@
 import mongoose from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
+const skuSchema = new mongoose.Schema({
+    sku: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    color: {
+        type: String,
+        required: true
+    },
+    size: {
+        type: String,
+        required: true
+    },
+    price: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    stock: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0
+    }
+});
+
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -12,19 +39,11 @@ const productSchema = new mongoose.Schema({
         ref: "Category",
         required: true
     },
-    price: {
+    basePrice: {
         type: Number,
         required: true,
         min: 0
     },
-    sizes: [{
-        type: String,
-        required: true
-    }],
-    colors: [{
-        type: String,
-        required: true
-    }],
     brand: {
         type: String,
         required: true
@@ -40,6 +59,7 @@ const productSchema = new mongoose.Schema({
     specifications: {
         type: Object
     },
+    variants: [skuSchema], // Thêm array variants chứa các SKU
     isNewProduct: {
         type: Boolean,
         default: false
