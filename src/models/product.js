@@ -1,81 +1,18 @@
 import mongoose from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
+import { updateCategoryAndBrandOnProductSave } from "../middleware/product";
 
-const skuSchema = new mongoose.Schema({
-    sku: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    color: {
-        type: String,
-        required: true
-    },
-    size: {
-        type: String,
-        required: true
-    },
-    price: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    stock: {
-        type: Number,
-        required: true,
-        min: 0,
-        default: 0
-    }
-});
 
 const productSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    categoryId: {
-        type: mongoose.Types.ObjectId,
-        ref: "Category",
-        required: true
-    },
-    basePrice: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    brand: {
-        type: String,
-        required: true
-    },
-    images: [{
-        type: String,
-        required: true
-    }],
-    description: {
-        type: String,
-        required: true
-    },
-    specifications: {
-        type: Object
-    },
-    variants: [skuSchema], // Thêm array variants chứa các SKU
-    isNewProduct: {
-        type: Boolean,
-        default: false
-    },
-    isBestSeller: {
-        type: Boolean,
-        default: false
-    },
-    discount: {
-        type: Number,
-        min: 0,
-        max: 100,
-        default: 0
-    }
+    name: { type: String, required: true },
+    description: { String },
+    brand: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand' },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+    gender: { type: String, enum: ['unisex', 'male', 'female'] },
+    variants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Variant'}],
 }, { timestamps: true });
 
+productSchema.pre('save', updateCategoryAndBrandOnProductSave);
 productSchema.plugin(mongoosePaginate);
 
 export default mongoose.model("Product", productSchema);

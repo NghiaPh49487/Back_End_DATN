@@ -1,5 +1,4 @@
 import Category from '../models/category.js';
-import Product from "../models/product";
 
 export const getAllCategories = async (req, res) => {
     try {
@@ -21,16 +20,7 @@ export const getCategoryById = async (req, res) => {
                 message: "Category not found"
             });
         }
-
-        // Tìm tất cả sản phẩm thuộc category này
-        const products = await Product.find({ categoryId: req.params.id });
-
-        // Trả về cả thông tin category và danh sách sản phẩm
-        return res.status(200).json({
-            category,
-            products,
-            totalProducts: products.length
-        });
+        return res.status(200).json(category);
     } catch (error) {
         return res.status(500).json({
             message: "Error getting category",

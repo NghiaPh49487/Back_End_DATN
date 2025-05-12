@@ -5,8 +5,7 @@ import {
     createProduct, 
     updateProduct, 
     removeProduct,
-    getProductVariants,
-    getVariantBySku
+    getProductVariants
 } from "../controllers/product";
 import { validateProduct } from "../validators/product";
 
@@ -18,6 +17,5 @@ productRoute.post("/", validateProduct, createProduct);
 productRoute.put("/:id", validateProduct, updateProduct);
 productRoute.delete("/:id", removeProduct);
 productRoute.get("/:id/variants", getProductVariants);
-productRoute.get("/variant/:sku", getVariantBySku);
 
 export default productRoute;
