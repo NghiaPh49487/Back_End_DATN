@@ -5,11 +5,14 @@ import {
     getProfile,
     updateProfile,
 } from "../controllers/auth";
+import authMiddleware from "../middleware/auth";
+import { validateRegister } from "../validators/register";
 
 
-const authRouter =  Router();
-authRouter.post("/register", register);
+const authRouter = Router();
+
+authRouter.post("/register", validateRegister, register);
 authRouter.post("/login", login);
-authRouter.get("/profile", getProfile);
-authRouter.put("/profile", updateProfile);
-export default authRouter;
+authRouter.get("/profile", authMiddleware, getProfile);
+authRouter.put("/profile", authMiddleware, updateProfile);
+export default authRouter; 

@@ -7,15 +7,15 @@ const brandSchema = Joi.object({
         .max(50)
         .required()
         .messages({
-            'string.empty': 'Brand name is required',
-            'string.min': 'Brand name must be at least 2 characters',
-            'string.max': 'Brand name cannot exceed 50 characters'
+            'string.empty': 'Tên thương hiệu không được để trống',
+            'string.min': 'Tên thương hiệu phải có ít nhất 2 ký tự',
+            'string.max': 'Tên thương hiệu không được vượt quá 50 ký tự'
         }),
     
     description: Joi.string()
         .max(500)
         .messages({
-            'string.max': 'Description cannot exceed 500 characters'
+            'string.max': 'Mô tả không được vượt quá 500 ký tự'
         })
 });
 
@@ -42,7 +42,7 @@ export const validateBrand = async (req, res, next) => {
             return res.status(400).json({ 
                 errors: [{ 
                     field: 'name', 
-                    message: 'Brand name already exists' 
+                    message: 'Tên thương hiệu đã tồn tại' 
                 }] 
             });
         }

@@ -1,28 +1,46 @@
+/**
+ * Middleware xác thực người dùng
+ * @module middleware/auth
+ * 
+ * Chức năng:
+ * 1. Kiểm tra token trong header
+ * 2. Xác thực token và giải mã
+ * 3. Kiểm tra user trong database
+ * 4. Gắn thông tin user vào request
+ */
 import userSchema from "../models/auth"
 import jwt from "jsonwebtoken";
 
+/**
+ * Middleware xác thực JWT
+ * 
+ * Quy trình xử lý:
+ * 1. Lấy token từ header Authorization
+ * 2. Kiểm tra tồn tại của token
+ * 3. Giải mã token để lấy thông tin user
+ * 4. Tìm user trong DB và gắn vào request
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware
+ */
 const authMiddleware = async (req, res, next) => {
     try {
         const token = req.headers['authorization']?.split(' ')[1];
-        // lấy token từ header tách chuỗi theo dấu cách và lấy phần tử thứ 2 trong mảng 
         if (!token) {
-            return res.status(404).json({ message: "Access token not found" });
-        };
-        // nếu không có token thì trả về lỗi 404
+            return res.status(404).json({ message: "Không tìm thấy token xác thực" });
+        }
 
-        const decoded = jwt.verify(token, "nghiant")
-        // giải mã token bằng jwt.verify và truyền vào secret key là "nghiant"
+        const decoded = jwt.verify(token, "nghiant");
         const user = await userSchema.findById(decoded.id).select("-password");
-        // tìm kiếm người dùng trong cơ sở dữ liệu bằng id đã giải mã từ token và loại bỏ trường password khỏi kết quả trả về
+        
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "Không tìm thấy người dùng" });
         }
         req.user = user;
-        // gán người dùng vào req.user để sử dụng trong các middleware và route tiếp theo`
         next();
-        // gọi hàm next để tiếp tục xử lý request
     } catch (error) {
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Lỗi hệ thống" });
     }
 };
 

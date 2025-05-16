@@ -1,25 +1,46 @@
+/**
+ * Module xử lý kiểm tra và làm sạch đánh giá sản phẩm
+ * @module validators/review
+ * 
+ * Chức năng chính:
+ * 1. Kiểm tra tính hợp lệ của dữ liệu đánh giá
+ * 2. Lọc và thay thế các từ ngữ không phù hợp
+ * 3. Đảm bảo định dạng chuẩn trước khi lưu vào DB
+ */
 import Joi from 'joi';
-import { isProfane, loadDictionary, add } from 'leo-profanity';
+import Filter from 'leo-profanity';
 
-loadDictionary(); // Load mặc định
+// Khởi tạo bộ lọc từ ngữ không phù hợp
+Filter.loadDictionary(); // Tải bộ từ điển mặc định
+// Thêm danh sách từ cấm tiếng Việt
+Filter.add(['địt', 'lồn', 'cặc', 'đụ', 'bú', 'dcm', 'dm', 'đm']); 
 
-add(['địt', 'lồn', 'cặc', 'đụ', 'bú', 'dcm', 'dm', 'đm']); // tuỳ ý mở rộng danh sách từ cấm
-
+/**
+ * Schema kiểm tra dữ liệu đánh giá
+ * @constant {Object} reviewSchema
+ * 
+ * Các trường dữ liệu:
+ * - product_id: ID sản phẩm (định dạng ObjectId MongoDB)
+ * - user_id: ID người dùng (định dạng ObjectId MongoDB)
+ * - rating: Số sao đánh giá (1-5)
+ * - comment: Nội dung đánh giá (1-1000 ký tự)
+ * - images: Danh sách URL ảnh (tối đa 5 ảnh)
+ */
 const reviewSchema = Joi.object({
     product_id: Joi.string()
         .pattern(/^[0-9a-fA-F]{24}$/)
         .required()
         .messages({
-            'string.pattern.base': 'Invalid product ID format',
-            'string.empty': 'Product ID is required'
+            'string.pattern.base': 'Định dạng ID sản phẩm không hợp lệ',
+            'string.empty': 'ID sản phẩm không được để trống'
         }),
 
     user_id: Joi.string()
         .pattern(/^[0-9a-fA-F]{24}$/)
         .required()
         .messages({
-            'string.pattern.base': 'Invalid user ID format',
-            'string.empty': 'User ID is required'
+            'string.pattern.base': 'Định dạng ID người dùng không hợp lệ',
+            'string.empty': 'ID người dùng không được để trống'
         }),
 
     rating: Joi.number()
@@ -28,11 +49,11 @@ const reviewSchema = Joi.object({
         .max(5)
         .required()
         .messages({
-            'number.base': 'Rating must be a number',
-            'number.integer': 'Rating must be an integer',
-            'number.min': 'Rating must be at least 1',
-            'number.max': 'Rating cannot exceed 5',
-            'number.empty': 'Rating is required'
+            'number.base': 'Đánh giá phải là số',
+            'number.integer': 'Đánh giá phải là số nguyên',
+            'number.min': 'Đánh giá phải từ 1 sao trở lên',
+            'number.max': 'Đánh giá không được quá 5 sao',
+            'number.empty': 'Vui lòng cho điểm đánh giá'
         }),
 
     comment: Joi.string()
@@ -40,9 +61,9 @@ const reviewSchema = Joi.object({
         .max(1000)
         .required()
         .messages({
-            'string.empty': 'Comment is required',
-            'string.min': 'Comment must be at least 1 character',
-            'string.max': 'Comment cannot exceed 1000 characters'
+            'string.empty': 'Nội dung đánh giá không được để trống',
+            'string.min': 'Nội dung đánh giá phải có ít nhất 1 ký tự',
+            'string.max': 'Nội dung đánh giá không được vượt quá 1000 ký tự'
         }),
 
     images: Joi.array()
@@ -50,22 +71,35 @@ const reviewSchema = Joi.object({
             Joi.string()
                 .uri()
                 .messages({
-                    'string.uri': 'Invalid image URL format'
+                    'string.uri': 'Định dạng URL ảnh không hợp lệ'
                 })
         )
         .max(5)
         .messages({
-            'array.max': 'Cannot upload more than 5 images'
+            'array.max': 'Không được tải lên quá 5 ảnh'
         })
 });
 
+/**
+ * Middleware kiểm tra và làm sạch dữ liệu đánh giá
+ * @function validateReview
+ * 
+ * Quy trình xử lý:
+ * 1. Kiểm tra cấu trúc dữ liệu theo schema
+ * 2. Kiểm tra nội dung comment có từ cấm
+ * 3. Làm sạch comment nếu cần
+ * 4. Chuyển tiếp hoặc trả về lỗi
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware
+ * @returns {void}
+ */
 export const validateReview = (req, res, next) => {
     const { error } = reviewSchema.validate(req.body, { abortEarly: false });
-    const cleanComment = leoProfanity.clean(comment); // tự động gắn dấu ***
-
     const errors = [];
 
-    // Lấy comment để kiểm tra từ ngữ không phù hợp
+    // Get comment from request body
     const { comment } = req.body;
 
     // Joi validation errors
@@ -79,16 +113,18 @@ export const validateReview = (req, res, next) => {
     }
 
     // Check profanity
-    if (comment && isProfane(comment)) {
+    if (comment && Filter.isProfane(comment)) {
         errors.push({
             field: 'comment',
-            message: 'Comment contains inappropriate language'
+            message: 'Nội dung chứa từ ngữ không phù hợp'
         });
     }
 
     if (errors.length > 0) {
         return res.status(400).json({ errors });
     }
-    req.body.comment = cleanComment; // Gán lại comment đã được làm sạch
+
+    // Clean the comment
+    req.body.comment = Filter.clean(comment);
     next();
 };

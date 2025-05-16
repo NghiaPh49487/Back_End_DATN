@@ -1,8 +1,18 @@
+/**
+ * Controllers xử lý các thao tác liên quan đến giỏ hàng
+ * Bao gồm: xem giỏ hàng, thêm sản phẩm, cập nhật số lượng, xóa sản phẩm
+ */
+
 import Cart from "../models/cart";
 import CartItem from "../models/cartItem";
 
+/**
+ * Lấy thông tin giỏ hàng của người dùng hiện tại
+ * Tự động tính tổng tiền và lấy thông tin chi tiết sản phẩm
+ */
 export const getCart = async (req, res) => {
     try {
+        // Tìm giỏ hàng của user và populate thông tin sản phẩm
         const cart = await Cart.findOne({ user_id: req.user._id })
             .populate({
                 path: 'cart_items',
@@ -25,10 +35,10 @@ export const getCart = async (req, res) => {
             });
         }
 
-        // Chuyển đổi cart thành plain object
+        // Chuyển đổi cart thành plain object để dễ xử lý
         const cartObject = cart.toObject();
 
-        // Tính tổng tiền
+        // Tính tổng tiền của giỏ hàng
         const totalAmount = cartObject.cart_items.reduce((total, item) => {
             const price = item.variant_id ? item.variant_id.price : 0;
             return total + (price * item.quantity);
@@ -48,11 +58,21 @@ export const getCart = async (req, res) => {
     }
 };
 
+/**
+ * Thêm sản phẩm vào giỏ hàng
+ * @param {Object|Array} req.body Thông tin sản phẩm cần thêm
+ * Có thể thêm một hoặc nhiều sản phẩm cùng lúc
+ * - product_id: ID sản phẩm
+ * - variant_id: ID biến thể
+ * - quantity: Số lượng (mặc định: 1)
+ */
 export const addToCart = async (req, res) => {
     try {
         const user_id = req.user._id;
+        // Chuyển đổi input thành mảng để xử lý đồng nhất
         const items = Array.isArray(req.body) ? req.body : [req.body];
 
+        // Tìm hoặc tạo giỏ hàng cho user
         let cart = await Cart.findOne({ user_id });
         if (!cart) {
             cart = await Cart.create({
@@ -63,9 +83,11 @@ export const addToCart = async (req, res) => {
 
         const addedItems = [];
 
+        // Xử lý từng sản phẩm
         for (const item of items) {
             const { product_id, variant_id, quantity = 1 } = item;
 
+            // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
             let existingItem = await CartItem.findOne({
                 cart_id: cart._id,
                 product_id,
@@ -73,23 +95,24 @@ export const addToCart = async (req, res) => {
             });
 
             if (existingItem) {
+                // Nếu đã có thì cộng thêm số lượng
                 existingItem.quantity += quantity;
                 await existingItem.save();
                 addedItems.push(existingItem);
             } else {
+                // Nếu chưa có thì tạo mới
                 const newItem = await CartItem.create({
                     cart_id: cart._id,
                     product_id,
                     variant_id,
                     quantity
                 });
-                // Thêm item vào cart_items array
                 cart.cart_items.push(newItem._id);
                 addedItems.push(newItem);
             }
         }
 
-        // Lưu cart sau khi cập nhật cart_items
+        // Lưu giỏ hàng sau khi cập nhật
         await cart.save();
 
         return res.status(200).json({
@@ -103,6 +126,11 @@ export const addToCart = async (req, res) => {
     }
 };
 
+/**
+ * Cập nhật số lượng sản phẩm trong giỏ hàng
+ * @param {string} req.params.itemId ID của cart item cần cập nhật
+ * @param {number} req.body.quantity Số lượng mới
+ */
 export const updateCartItem = async (req, res) => {
     try {
         const { quantity } = req.body;
@@ -120,6 +148,10 @@ export const updateCartItem = async (req, res) => {
     }
 };
 
+/**
+ * Xóa sản phẩm khỏi giỏ hàng
+ * @param {string} req.params.itemId ID của cart item cần xóa
+ */
 export const removeFromCart = async (req, res) => {
     try {
         const cartItem = await CartItem.findByIdAndDelete(req.params.itemId);

@@ -5,7 +5,8 @@ const categorySchema = Joi.object({
     category_id: Joi.string()
         .required()
         .messages({
-            'string.empty': 'Category ID is required'
+            'string.empty': 'Mã danh mục không được để trống',
+            'any.required': 'Mã danh mục là bắt buộc'
         }),
     
     name: Joi.string()
@@ -13,21 +14,22 @@ const categorySchema = Joi.object({
         .max(50)
         .required()
         .messages({
-            'string.empty': 'Category name is required',
-            'string.min': 'Category name must be at least 2 characters',
-            'string.max': 'Category name cannot exceed 50 characters'
+            'string.empty': 'Tên danh mục không được để trống',
+            'string.min': 'Tên danh mục phải có ít nhất 2 ký tự',
+            'string.max': 'Tên danh mục không được vượt quá 50 ký tự',
+            'any.required': 'Tên danh mục là bắt buộc'
         }),
     
     description: Joi.string()
         .max(500)
         .messages({
-            'string.max': 'Description cannot exceed 500 characters'
+            'string.max': 'Mô tả không được vượt quá 500 ký tự'
         }),
     
     image_logo: Joi.string()
         .uri()
         .messages({
-            'string.uri': 'Invalid image URL format'
+            'string.uri': 'Định dạng URL hình ảnh không hợp lệ'
         })
 });
 

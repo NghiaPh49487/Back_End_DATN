@@ -1,21 +1,4 @@
 import mongoose from "mongoose";
-import Variant from '../models/variant.js';
-
-export const updateProductOnVariantSave = async function(next) {
-    try {
-        if (this.isNew) {
-            const Product = mongoose.model('Product');
-            await Product.findByIdAndUpdate(
-                this.product_id,
-                { $push: { variants: this._id } },
-                { new: true }
-            );
-        }
-        next();
-    } catch (error) {
-        next(error);
-    }
-};
 
 export const checkDuplicateSKU = async (req, res, next) => {
     try {
@@ -28,23 +11,22 @@ export const checkDuplicateSKU = async (req, res, next) => {
             query._id = { $ne: variantId };
         }
 
-        const existingVariant = await Variant.findOne(query);
+        const existingVariant = await mongoose.model('Variant').findOne(query);
         
         if (existingVariant) {
             return res.status(400).json({
                 errors: [{
                     field: 'sku',
-                    message: 'SKU already exists'
+                    message: 'Mã SKU đã tồn tại trong hệ thống'
                 }]
             });
         }
-
         next();
     } catch (error) {
         return res.status(500).json({
             errors: [{
                 field: 'server',
-                message: 'Internal server error while checking SKU'
+                message: 'Lỗi khi kiểm tra mã SKU'
             }]
         });
     }

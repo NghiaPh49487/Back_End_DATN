@@ -1,3 +1,8 @@
+/**
+ * Controllers xử lý các thao tác liên quan đến đơn hàng
+ * Bao gồm: tạo đơn hàng, xem danh sách, chi tiết, cập nhật trạng thái và hủy đơn
+ */
+
 import Order from "../models/oder.js";
 import OrderItem from "../models/oderItem.js";
 import Cart from '../models/cart.js';
@@ -5,18 +10,23 @@ import CartItem from '../models/cartItem.js';
 import Stock from '../models/stock.js';
 import StockHistory from '../models/stockHistory.js';
 
+/**
+ * Tạo đơn hàng mới từ giỏ hàng
+ * @param {string} req.body.cart_id ID của giỏ hàng
+ * Yêu cầu người dùng đã đăng nhập và có giỏ hàng
+ */
 export const createOrder = async (req, res) => {
     try {
         // Kiểm tra user authentication
         if (!req.user || !req.user._id) {
-            return res.status(401).json({ message: "Unauthorized - User not authenticated" });
+            return res.status(401).json({ message: "Vui lòng đăng nhập để tiếp tục" });
         }
 
         const user_id = req.user._id;
         const { cart_id } = req.body;
 
         if (!cart_id) {
-            return res.status(400).json({ message: "Cart ID is required" });
+            return res.status(400).json({ message: "Không tìm thấy giỏ hàng" });
         }
 
         // Kiểm tra giỏ hàng tồn tại và thuộc về user
@@ -36,11 +46,11 @@ export const createOrder = async (req, res) => {
             });
 
         if (!cart) {
-            return res.status(404).json({ message: "Cart not found" });
+            return res.status(404).json({ message: "Giỏ hàng không tồn tại" });
         }
 
         if (!cart.cart_items || cart.cart_items.length === 0) {
-            return res.status(400).json({ message: "Cart is empty" });
+            return res.status(400).json({ message: "Giỏ hàng trống" });
         }
 
         // Kiểm tra số lượng tồn kho trước khi tạo đơn
@@ -50,8 +60,8 @@ export const createOrder = async (req, res) => {
             if (!stock || stock.quantity < item.quantity) {
                 return res.status(400).json({
                     message: `Sản phẩm ${item.product_id.name} không đủ số lượng trong kho`,
-                    available: stock ? stock.quantity : 0,
-                    requested: item.quantity
+                    tonKho: stock ? stock.quantity : 0,
+                    yeuCau: item.quantity
                 });
             }
         }
@@ -108,22 +118,26 @@ export const createOrder = async (req, res) => {
         await Cart.findByIdAndUpdate(cart_id, { cart_items: [] });
 
         res.status(201).json({
-            message: "Order created successfully",
-            order: {
+            message: "Đặt hàng thành công",
+            donHang: {
                 ...order.toObject(),
-                items: orderItems
+                chiTietDonHang: orderItems
             }
         });
 
     } catch (error) {
         console.error("Error details:", error);
         res.status(500).json({
-            message: "Error creating order",
+            message: "Lỗi khi tạo đơn hàng",
             error: error.message
         });
     }
 };
 
+/**
+ * Lấy danh sách đơn hàng của người dùng
+ * Sắp xếp theo thời gian tạo mới nhất
+ */
 export const getOrders = async (req, res) => {
     try {
         const orders = await Order.find({ user_id: req.user._id })
@@ -131,10 +145,18 @@ export const getOrders = async (req, res) => {
             .sort({ createdAt: -1 });
         return res.status(200).json(orders);
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({
+            message: "Lỗi khi lấy danh sách đơn hàng",
+            error: error.message
+        });
     }
 };
 
+/**
+ * Lấy chi tiết một đơn hàng
+ * @param {string} req.params.id ID của đơn hàng
+ * Trả về thông tin đầy đủ bao gồm sản phẩm và biến thể
+ */
 export const getOrderById = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id)
@@ -148,15 +170,26 @@ export const getOrderById = async (req, res) => {
             });
 
         if (!order) {
-            return res.status(404).json({ message: "Order not found" });
+            return res.status(404).json({
+                message: "Không tìm thấy đơn hàng"
+            });
         }
 
         return res.status(200).json(order);
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({
+            message: "Lỗi khi lấy thông tin đơn hàng",
+            error: error.message
+        });
     }
 };
 
+/**
+ * Cập nhật trạng thái đơn hàng
+ * @param {string} req.params.id ID của đơn hàng
+ * @param {string} req.body.status Trạng thái mới
+ * Các trạng thái: pending, processing, shipped, delivered, canceled
+ */
 export const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
@@ -167,15 +200,26 @@ export const updateOrderStatus = async (req, res) => {
         );
 
         if (!order) {
-            return res.status(404).json({ message: "Order not found" });
+            return res.status(404).json({
+                message: "Không tìm thấy đơn hàng"
+            });
         }
 
         return res.status(200).json(order);
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({
+            message: "Lỗi khi cập nhật trạng thái đơn hàng",
+            error: error.message
+        });
     }
 };
 
+/**
+ * Hủy đơn hàng
+ * @param {string} req.params.id ID của đơn hàng cần hủy
+ * @param {string} req.body.cancel_reason Lý do hủy đơn
+ * Tự động hoàn lại số lượng vào kho
+ */
 export const cancelOrder = async (req, res) => {
     try {
         // Kiểm tra user authentication
@@ -245,9 +289,9 @@ export const cancelOrder = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error cancelling order:", error);
+        console.error("Lỗi khi hủy đơn hàng:", error);
         return res.status(500).json({
-            message: "Error cancelling order",
+            message: "Lỗi khi hủy đơn hàng",
             error: error.message
         });
     }

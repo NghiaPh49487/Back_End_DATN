@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { updateProductOnVariantSave } from "../middleware/variantMiddleware.js";
+import { updateProductOnVariantSave } from "../middleware/variantHooks";
 
 const variantSchema = new mongoose.Schema({
     product_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },

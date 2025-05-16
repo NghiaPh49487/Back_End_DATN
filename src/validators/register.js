@@ -5,16 +5,18 @@ const registerSchema = Joi.object({
         .email()
         .required()
         .messages({
-            'string.email': 'Invalid email format',
-            'string.empty': 'Email is required'
+            'string.email': 'Định dạng email không hợp lệ',
+            'string.empty': 'Email không được để trống',
+            'any.required': 'Email là bắt buộc'
         }),
     
     password: Joi.string()
         .min(6)
         .required()
         .messages({
-            'string.empty': 'Password is required',
-            'string.min': 'Password must be at least 6 characters'
+            'string.empty': 'Mật khẩu không được để trống',
+            'string.min': 'Mật khẩu phải có ít nhất 6 ký tự',
+            'any.required': 'Mật khẩu là bắt buộc'
         })
 });
 

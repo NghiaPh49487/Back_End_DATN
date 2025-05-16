@@ -5,13 +5,16 @@ import {
     getProductReviews,
     createReview,
 } from "../controllers/review";
+import authMiddleware from "../middleware/auth";
+import { validateReview } from "../validators/review";
 
 
 const reviewRouter = Router();
+reviewRouter.use(validateReview)
 
 reviewRouter.get("/", getProductReviews);
-reviewRouter.post("/", createReview);
-reviewRouter.put("/:id", updateReview);
-reviewRouter.delete("/:id", deleteReview);
+reviewRouter.post("/", authMiddleware, createReview);
+reviewRouter.put("/:id", authMiddleware, updateReview);
+reviewRouter.delete("/:id", authMiddleware, deleteReview);
 
 export default reviewRouter;

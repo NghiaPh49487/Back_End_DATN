@@ -5,8 +5,8 @@ const stockSchema = Joi.object({
         .pattern(/^[0-9a-fA-F]{24}$/)
         .required()
         .messages({
-            'string.pattern.base': 'Invalid variant ID format',
-            'string.empty': 'Variant ID is required'
+            'string.pattern.base': 'Định dạng ID biến thể không hợp lệ',
+            'string.empty': 'ID biến thể không được để trống'
         }),
     
     quantity: Joi.number()
@@ -14,33 +14,33 @@ const stockSchema = Joi.object({
         .min(1)
         .required()
         .messages({
-            'number.base': 'Quantity must be a number',
-            'number.integer': 'Quantity must be an integer',
-            'number.min': 'Quantity must be at least 1',
-            'number.empty': 'Quantity is required'
+            'number.base': 'Số lượng phải là số',
+            'number.integer': 'Số lượng phải là số nguyên',
+            'number.min': 'Số lượng phải lớn hơn 0',
+            'number.empty': 'Số lượng không được để trống'
         }),
     
     type: Joi.string()
         .valid('in', 'out')
         .required()
         .messages({
-            'any.only': 'Type must be either "in" or "out"',
-            'string.empty': 'Type is required'
+            'any.only': 'Loại phải là "nhập kho" hoặc "xuất kho"',
+            'string.empty': 'Loại không được để trống'
         }),
     
     reason: Joi.string()
         .max(200)
         .required()
         .messages({
-            'string.empty': 'Reason is required',
-            'string.max': 'Reason cannot exceed 200 characters'
+            'string.empty': 'Lý do không được để trống',
+            'string.max': 'Lý do không được vượt quá 200 ký tự'
         }),
     
     note: Joi.string()
         .max(500)
         .allow('', null)
         .messages({
-            'string.max': 'Note cannot exceed 500 characters'
+            'string.max': 'Ghi chú không được vượt quá 500 ký tự'
         })
 });
 

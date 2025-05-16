@@ -5,57 +5,48 @@ const variantSchema = Joi.object({
         .pattern(/^[0-9a-fA-F]{24}$/)
         .required()
         .messages({
-            'string.pattern.base': 'Invalid product ID format',
-            'string.empty': 'Product ID is required'
-        }),
-    
-    sku: Joi.string()
-        .required()
-        .trim()
-        .messages({
-            'string.empty': 'SKU is required'
+            'string.pattern.base': 'Định dạng ID sản phẩm không hợp lệ',
+            'string.empty': 'ID sản phẩm không được để trống'
         }),
     
     color: Joi.string()
-        .allow('')
-        .optional()
+        .required()
         .messages({
-            'string.base': 'Color must be a string'
+            'string.empty': 'Màu sắc không được để trống'
         }),
     
     size: Joi.string()
-        .allow('')
-        .optional()
+        .required()
         .messages({
-            'string.base': 'Size must be a string'
+            'string.empty': 'Kích thước không được để trống'
         }),
     
     image_url: Joi.string()
         .uri()
-        .allow('')
-        .optional()
+        .required()
         .messages({
-            'string.uri': 'Invalid image URL format'
+            'string.uri': 'Định dạng URL ảnh không hợp lệ',
+            'string.empty': 'URL ảnh không được để trống'
         }),
     
     price: Joi.number()
         .min(0)
-        .allow(null)
-        .optional()
+        .required()
         .messages({
-            'number.base': 'Price must be a number',
-            'number.min': 'Price cannot be negative'
+            'number.base': 'Giá bán phải là số',
+            'number.min': 'Giá bán không được âm',
+            'number.empty': 'Giá bán không được để trống'
         }),
     
     import_price: Joi.number()
         .min(0)
         .max(Joi.ref('price'))
-        .allow(null)
-        .optional()
+        .required()
         .messages({
-            'number.base': 'Import price must be a number',
-            'number.min': 'Import price cannot be negative',
-            'number.max': 'Import price cannot be greater than selling price'
+            'number.base': 'Giá nhập phải là số',
+            'number.min': 'Giá nhập không được âm',
+            'number.max': 'Giá nhập không được cao hơn giá bán',
+            'number.empty': 'Giá nhập không được để trống'
         })
 });
 

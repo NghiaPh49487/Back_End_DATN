@@ -6,47 +6,47 @@ const productSchema = Joi.object({
         .max(100)
         .required()
         .messages({
-            'string.empty': 'Product name is required',
-            'string.min': 'Product name must be at least 2 characters',
-            'string.max': 'Product name cannot exceed 100 characters'
+            'string.empty': 'Tên sản phẩm không được để trống',
+            'string.min': 'Tên sản phẩm phải có ít nhất 2 ký tự',
+            'string.max': 'Tên sản phẩm không được vượt quá 100 ký tự'
         }),
     
     description: Joi.string()
         .max(1000)
         .messages({
-            'string.max': 'Description cannot exceed 1000 characters'
+            'string.max': 'Mô tả không được vượt quá 1000 ký tự'
         }),
     
     brand: Joi.string()
         .pattern(/^[0-9a-fA-F]{24}$/)
         .required()
         .messages({
-            'string.pattern.base': 'Invalid brand ID format',
-            'string.empty': 'Brand ID is required'
+            'string.pattern.base': 'Định dạng ID thương hiệu không hợp lệ',
+            'string.empty': 'ID thương hiệu không được để trống'
         }),
     
     category: Joi.string()
         .pattern(/^[0-9a-fA-F]{24}$/)
         .required()
         .messages({
-            'string.pattern.base': 'Invalid category ID format',
-            'string.empty': 'Category ID is required'
+            'string.pattern.base': 'Định dạng ID danh mục không hợp lệ',
+            'string.empty': 'ID danh mục không được để trống'
         }),
     
     gender: Joi.string()
         .valid('unisex', 'male', 'female')
         .required()
         .messages({
-            'any.only': 'Gender must be either unisex, male, or female',
-            'string.empty': 'Gender is required'
+            'any.only': 'Giới tính phải là unisex, nam hoặc nữ',
+            'string.empty': 'Giới tính không được để trống'
         }),
     
     variants: Joi.array()
         .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/))
         .min(1)
         .messages({
-            'array.min': 'At least one variant is required',
-            'string.pattern.base': 'Invalid variant ID format'
+            'array.min': 'Phải có ít nhất một biến thể',
+            'string.pattern.base': 'Định dạng ID biến thể không hợp lệ'
         })
 });
 
